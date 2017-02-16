@@ -3,7 +3,7 @@ author: "Jordan Farrer"
 geometry: margin=.75in
 output: function(...) {
 
-          fmt <- rmarkdown::pdf_document(toc = FALSE, number_section = FALSE, df_print = 'kable',...)
+          fmt <- rmarkdown::pdf_document(toc = FALSE, number_section = FALSE, df_print = 'kable', includes = includes(in_header = "header.tex"),...)
         
           fmt$knitr$knit_hooks$size = function(before, options, envir) {
             if (before) return(paste0("\n \\", options$size, "\n\n"))
@@ -12,7 +12,6 @@ output: function(...) {
         
           return(fmt)
         }
-
 ---
 
 ```{r setup, include = FALSE}
