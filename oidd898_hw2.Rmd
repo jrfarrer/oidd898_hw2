@@ -12,6 +12,7 @@ output: function(...) {
         
           return(fmt)
         }
+        
 ---
 
 ```{r setup, include = FALSE}
@@ -23,11 +24,11 @@ panderOptions('big.mark', ',')
 options(scipen = 10, expressions = 10000, digits = 4)
 ```
 
-The R code that built this can be found in []().
+The R code that built this can be found in **[https://github.com/jrfarrer/oidd898_hw2](https://github.com/jrfarrer/oidd898_hw2)**.
 
 ##### 1) 5 cities to open your first stores 
 
-In order to create a set of 5 cities to open the first stores in I started with a [list of the 298 largest cities in the US](https://simple.wikipedia.org/wiki/List_of_United_States_cities_by_population) and filtered down to the those in the 19 Midwest states specified by the [FiveThirtyEight](https://fivethirtyeight.com/datalab/what-states-are-in-the-midwest/). I attempted to use these in Facebook Ads; however, I did not find the filters useful enough. Instead, I decided to look at the popularity of the words "weed", "cannabis", "marijuana", and "pot" on election day (Nov 8, 2017) across the US[^1]. The choice of election day was to identify people curious if the legalization of marijuana was on the ballot. In addition, this allowed each state could get a score. City-level data was not possible here. Then, I combined the two datasets ranked the cities based on being in a state with a high-level of popularity for the weed related terms and the largest population. Noteably, four of the top five are cities in CO where this was not a ballot question, though it was in Montana (and North Dakota - #13). 
+In order to create a set of 5 cities to open the first stores in I started with a [list of the 298 largest cities in the US](https://simple.wikipedia.org/wiki/List_of_United_States_cities_by_population) and filtered down to the those in the 19 Midwest states specified by the [FiveThirtyEight](https://fivethirtyeight.com/datalab/what-states-are-in-the-midwest/). I attempted to use these in Facebook Ads; however, I did not find the filters useful enough to evaluate individual cities. Instead, I decided to look at the popularity of the words "weed", "cannabis", "marijuana", and "pot" on election day (Nov 8, 2017) across the US[^1]. The choice of election day was to identify people curious if the legalization of marijuana was on the ballot. In addition, this allowed each state could get a score. City-level data was not possible here. Then, I combined the two datasets ranked the cities based on being in a state with a high-level of popularity for the weed related terms and the largest population. Noteably, four of the top five are cities in CO where this was not a ballot question, though it was in Montana (and #13 North Dakota). 
 
 ```{r echo = FALSE}
 library("rvest")
@@ -110,6 +111,16 @@ dispensaries %>%
 
 ##### 3) 2 foods to sell in your store in addition to the marijuana
 
+Oftentimes our perception of food is more than just the taste. It is also the culmination of advertising messages that shape our feelings toward a food. Like most Americans I dream of hamburgers; however, each time I eat one I am let down by the taste. The years of seeing juicy hamburgers in advertising have made me crave a hamburger rather than the actual taste. In choosing two foods to sell in addition to marijuana, we need to remember that what is more important is what marketing has best positioned to be complements of marijuana rather than which foods *actually* make sense with the plant. I attempted to create Facebook Ads audience with different combinations of terms that demonstrated interest in marijuana and affinity to a particular food. I also attempted to find search terms related to "munchies" on Google Trends or find terms correlated with marijuana-related terms using [Google Correlate] (https://www.google.com/trends/correlate). 
+
+![Attempt find correlations with Facebook Ads](fb_ads2.png)
+
+Unfortunately, I was unable to find anything that made reasonable sense. In the case of food, it might make sense to go do the Malcolm Gladwell approach and "go with your gut". Moreover, product choice is more likely to be something that can be tested and adjusted. As such I would recommend:
+
+|Food|Justification|
+|:----:|:----|
+|Doritos|Item marketed as one to crave|
+|Burritos|Heavier, also associated with cravings|
 
 [^1]: https://www.google.com/trends/explore?date=2016-11-08%202016-11-08&geo=US&q=weed%2Bpot%2Bcannabis%2Bmarijuana
 [^2]: https://www.google.com/trends/explore?date=now%207-d&geo=US-WA&q=dispensary,dispensaries,dispensary%20%2B%20dispensaries
