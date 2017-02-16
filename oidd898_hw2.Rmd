@@ -1,0 +1,118 @@
+---
+author: "Jordan Farrer"
+geometry: margin=.75in
+output: function(...) {
+
+          fmt <- rmarkdown::pdf_document(toc = FALSE, number_section = FALSE, df_print = 'kable',...)
+        
+          fmt$knitr$knit_hooks$size = function(before, options, envir) {
+            if (before) return(paste0("\n \\", options$size, "\n\n"))
+            else return("\n\n \\normalsize \n")
+          }
+        
+          return(fmt)
+        }
+
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = 'center', size = 'small')
+pacman::p_load(tidyverse, pander, stringr, rvest, lubridate)
+panderOptions('round', 4)
+panderOptions('keep.trailing.zeros', TRUE)
+panderOptions('big.mark', ',')
+options(scipen = 10, expressions = 10000, digits = 4)
+```
+
+The R code that built this can be found in []().
+
+##### 1) 5 cities to open your first stores 
+
+In order to create a set of 5 cities to open the first stores in I started with a [list of the 298 largest cities in the US](https://simple.wikipedia.org/wiki/List_of_United_States_cities_by_population) and filtered down to the those in the 19 Midwest states specified by the [FiveThirtyEight](https://fivethirtyeight.com/datalab/what-states-are-in-the-midwest/). I attempted to use these in Facebook Ads; however, I did not find the filters useful enough. Instead, I decided to look at the popularity of the words "weed", "cannabis", "marijuana", and "pot" on election day (Nov 8, 2017) across the US[^1]. The choice of election day was to identify people curious if the legalization of marijuana was on the ballot. In addition, this allowed each state could get a score. City-level data was not possible here. Then, I combined the two datasets ranked the cities based on being in a state with a high-level of popularity for the weed related terms and the largest population. Noteably, four of the top five are cities in CO where this was not a ballot question, though it was in Montana (and North Dakota - #13). 
+
+```{r echo = FALSE}
+library("rvest")
+url <- "https://simple.wikipedia.org/wiki/List_of_United_States_cities_by_population"
+population <- 
+  (url %>%
+  read_html() %>%
+  html_nodes(xpath='//*[@id="mw-content-text"]/table[1]') %>%
+  html_table())[[1]] %>%
+  mutate(population = str_replace_all(`Population (2014)`, "&", "")) %>%
+  separate(col = population, into = c("left", 'right'), sep = "\\.") %>%
+  mutate(Population = as.integer(str_replace_all(left, ",", ''))) %>%
+  select(Rank, City, State, Population) %>%
+  as_tibble()
+
+midwest_states <-
+  population %>%
+  inner_join(
+      data_frame(
+        state = state.name
+        , abb = state.abb
+      ) %>%
+      filter(abb %in% c('PA','WV','KY','OH','IN','IL','MI','WI','IA','MO',
+                        'OK','KS','CO','NE','SD','ND','MN','WY','MT'))
+      , by = c("State" = "state")
+  )
+  
+fb_bulk_upload_string <-   
+  midwest_states %>%
+  mutate(city_state = paste0(City, ", ", State)) %>%
+  select(city_state) %>%
+  unlist() %>%
+  paste0(collapse = "; ")
+
+google_trends_elections_day <- read_csv("election_day.csv", skip = 3, col_names = c("state", "value"))
+
+midwest_states %>%
+  inner_join(google_trends_elections_day, by = c("State" = "state")) %>%
+  arrange(desc(value), desc(Population)) %>%
+  mutate(Rank = row_number()) %>%
+  select(Rank, City, State, Population, `Google Trends State Value` = value) %>%
+  head(10) %>%
+  pander(caption = "Order of Cities to Open Stores (incl. Top 5)")
+```
+
+![Attempt to use Facebook Ads](fb_ads.png)
+
+##### 2) Hours your store will be opened
+
+Google Trends only has hourly data if you look at data for the past 7 days. I did this for Washington state and Colorado (separately because it cannot be done combined). As these are two states with recreational marijuana people may search for "dispensaries near me". I wanted to find when this was most common. I used terms "dispensary" or "dispensaries" for WA[^2] and CO[^3] and plotted the two time series below. From this charts, I would have the stores open from noon to 3am each day except Sunday (early close at midnight). 
+
+```{r echo = FALSE}
+dispensaries <- 
+  purrr::map(c('dispensaries_wa.csv', 'dispensaries_co.csv'), read_csv, skip = 3, 
+             col_names = c("time", "dispensary","dispensaries","dispensary + dispensaries")) %>% 
+    bind_rows() %>%
+    cbind(state = c(rep("Washington", nrow(.)/ 2), rep("Colorado", nrow(.)/ 2))) %>%
+    gather(keyword, value, -state, -time) %>%
+    mutate(
+        keyword = factor(keyword, levels = c("dispensary","dispensaries","dispensary + dispensaries"))
+      , day = lubridate::wday(time, label = TRUE)
+      , hour = lubridate::hour(time)
+    ) %>%
+    select(state, everything())
+
+dispensaries %>%
+  filter(keyword == "dispensary + dispensaries") %>%
+  ggplot() +
+  geom_line(aes(x = hour, y = value, colour = state)) +
+  geom_smooth(aes(x = hour, y = value), se = FALSE) +
+  facet_grid(. ~ day) +
+  theme_bw() + 
+  theme(legend.position = 'top') +
+  scale_x_continuous(breaks = c(6, 12, 18, 24)) +
+  labs(y = NULL, x = "Time of Day", 
+       caption = "Feb 8, 2017 9:00pm to Feb 15, 2017 7:00pm",
+       colour = NULL, title = "Google Trends Popularity of 'dispensary or dispensaries'")
+```
+
+
+##### 3) 2 foods to sell in your store in addition to the marijuana
+
+
+[^1]: https://www.google.com/trends/explore?date=2016-11-08%202016-11-08&geo=US&q=weed%2Bpot%2Bcannabis%2Bmarijuana
+[^2]: https://www.google.com/trends/explore?date=now%207-d&geo=US-WA&q=dispensary,dispensaries,dispensary%20%2B%20dispensaries
+[^3]: https://www.google.com/trends/explore?date=now%207-d&geo=US-CO&q=dispensary,dispensaries,dispensary%20%2B%20dispensaries 
+
